@@ -32,10 +32,8 @@ function generateTip() {
 // --------------------------
 // Global Variables
 // --------------------------
-// We'll store daily target in localStorage under 'dailyTarget'.
-// Default to 2000 ml if not found.
 let waterTarget = parseInt(localStorage.getItem('dailyTarget')) || 2000;
-let waterTotal = 0; 
+let waterTotal = 0;
 let waterHistory = [];
 
 // --------------------------
@@ -136,7 +134,7 @@ function generateCalendar() {
   const firstDay = new Date(year, month, 1).getDay();
   const totalDays = new Date(year, month + 1, 0).getDate();
   
-  // empty cells for days before the first day of the month
+  // empty cells for days before the first of the month
   for (let i = 0; i < firstDay; i++) {
     const emptyCell = document.createElement('div');
     emptyCell.classList.add('calendar-day');
@@ -169,24 +167,19 @@ function updateCalendarSummary() {
   const totalDays = new Date(year, month + 1, 0).getDate();
   
   let achievedDays = 0;
-  let totalIntake = 0;
   
   for (let day = 1; day <= totalDays; day++) {
     const dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
     const consumption = parseInt(localStorage.getItem('consumption-' + dateKey)) || 0;
-    totalIntake += consumption;
     if (consumption >= waterTarget) {
       achievedDays++;
     }
   }
   
-  // If you have an element for days achieved, update it:
   const daysAchievedEl = document.getElementById('days-achieved');
   if (daysAchievedEl) {
     daysAchievedEl.innerText = achievedDays;
   }
-  
-  // If you want to display total intake or something else, you can do so here
 }
 
 // --------------------------
@@ -230,8 +223,8 @@ function startReminders() {
 function showNotification() {
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     new Notification("Time to drink water!", {
-      body: "Stay hydrated by drinking a glass of water.",
-      // icon: "water.png" // uncomment or adjust path if you have a custom icon
+      body: "Stay hydrated by drinking a glass of water."
+      // icon: "water.png" // Uncomment if you have an icon
     });
   }
 }
@@ -297,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 1. Request Notification Permission
   requestNotificationPermission();
   
-  // 2. Load existing daily target (if any)
+  // 2. Load existing daily target
   const storedTarget = localStorage.getItem('dailyTarget');
   if (storedTarget) {
     waterTarget = parseInt(storedTarget);
@@ -350,45 +343,4 @@ document.addEventListener('DOMContentLoaded', function() {
     const freqVal = localStorage.getItem('reminderFrequency') || 60;
     const freqInput = document.getElementById('reminder-frequency');
     if (freqInput) {
-      freqInput.value = freqVal;
-    }
-    
-    // Load daily target
-    const dailyTargetVal = parseInt(localStorage.getItem('dailyTarget')) || 2000;
-    const dailyTargetInput = document.getElementById('daily-target');
-    if (dailyTargetInput) {
-      dailyTargetInput.value = dailyTargetVal;
-    }
-    
-    // Load dark mode
-    const darkPref = localStorage.getItem('darkModeEnabled');
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    if (darkModeToggle) {
-      const isDark = (darkPref === 'true');
-      darkModeToggle.checked = isDark;
-      applyDarkMode(isDark);
-    }
-  }
-  
-  // 8. Snooze
-  const snoozeInput = document.getElementById('snooze-time');
-  if (snoozeInput) {
-    snoozeInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        snoozeReminder();
-      }
-    });
-  }
-  
-  // 9. Calendar
-  generateCalendar();
-  updateCalendarSummary();
-  
-  // 10. Load today's consumption
-  const today = new Date().toISOString().split('T')[0];
-  const saved = localStorage.getItem('consumption-' + today);
-  if (saved) {
-    waterTotal = parseInt(saved);
-  }
-  updateWaterDisplay();
-});
+      freqIn
