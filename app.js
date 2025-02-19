@@ -32,10 +32,6 @@ function generateTip() {
 // --------------------------
 // Visual Bottle & Streak Update
 // --------------------------
-let waterTotal = 0;
-const waterTarget = 2000; // in ml
-let waterHistory = [];
-
 function updateGlass() {
   const fillElement = document.getElementById('water-fill');
   if (fillElement) {
@@ -65,6 +61,10 @@ function updateStreak() {
 // --------------------------
 // Water Consumption Functions
 // --------------------------
+let waterTotal = 0;
+const waterTarget = 2000; // in ml
+let waterHistory = [];  // for undo functionality
+
 function updateWaterDisplay() {
   const totalEl = document.getElementById('water-total');
   if(totalEl) totalEl.innerText = waterTotal;
@@ -213,8 +213,7 @@ function startReminders() {
 function showNotification() {
   if (Notification.permission === "granted") {
     new Notification("Time to drink water!", {
-      body: "Stay hydrated by drinking a glass of water.",
-      icon: "water.png" // QUOTED to avoid syntax error
+      body: "Stay hydrated by drinking a glass of water."
     });
   }
 }
@@ -290,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('reminder-frequency').value = frequency;
   }
   
-  // Snooze listener on settings page
+  // Snooze listener on settings page (optional)
   const snoozeInput = document.getElementById('snooze-time');
   if (snoozeInput) {
     snoozeInput.addEventListener('keypress', function(e) {
