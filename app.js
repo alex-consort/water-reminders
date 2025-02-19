@@ -30,12 +30,19 @@ function generateTip() {
 }
 
 // --------------------------
+// Global Variables
+// --------------------------
+let waterTotal = 0;
+const waterTarget = 2000; // in ml
+let waterHistory = []; // for undo functionality
+
+// --------------------------
 // Visual Bottle & Streak Update
 // --------------------------
 function updateGlass() {
   const fillElement = document.getElementById('water-fill');
   if (fillElement) {
-    let percentage = Math.min((waterTotal / waterTarget) * 100, 100);
+    const percentage = Math.min((waterTotal / waterTarget) * 100, 100);
     fillElement.style.height = percentage + '%';
   }
 }
@@ -55,19 +62,19 @@ function updateStreak() {
     }
   }
   const streakEl = document.getElementById('streak-count');
-  if(streakEl) streakEl.innerText = streak;
+  if (streakEl) {
+    streakEl.innerText = streak;
+  }
 }
 
 // --------------------------
 // Water Consumption Functions
 // --------------------------
-let waterTotal = 0;
-const waterTarget = 2000; // in ml
-let waterHistory = [];  // for undo functionality
-
 function updateWaterDisplay() {
   const totalEl = document.getElementById('water-total');
-  if(totalEl) totalEl.innerText = waterTotal;
+  if (totalEl) {
+    totalEl.innerText = waterTotal;
+  }
   updateGlass();
   updateStreak();
 }
@@ -124,15 +131,15 @@ function generateCalendar() {
   const firstDay = new Date(year, month, 1).getDay();
   const totalDays = new Date(year, month + 1, 0).getDate();
   
-  // empty cells for days before first of month
-  for (let i = 0; i < firstDay; i++){
+  // empty cells for days before the first of the month
+  for (let i = 0; i < firstDay; i++) {
     const emptyCell = document.createElement('div');
     emptyCell.classList.add('calendar-day');
     calendarEl.appendChild(emptyCell);
   }
   
   // fill in each day
-  for (let day = 1; day <= totalDays; day++){
+  for (let day = 1; day <= totalDays; day++) {
     const cell = document.createElement('div');
     cell.classList.add('calendar-day');
     
@@ -159,7 +166,7 @@ function updateCalendarSummary() {
   let achievedDays = 0;
   let totalIntake = 0;
   
-  for (let day = 1; day <= totalDays; day++){
+  for (let day = 1; day <= totalDays; day++) {
     const dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
     const consumption = localStorage.getItem('consumption-' + dateKey);
     if (consumption) {
@@ -170,12 +177,13 @@ function updateCalendarSummary() {
     }
   }
   
-  const avgIntake = totalDays > 0 ? Math.round(totalIntake / totalDays) : 0;
-  
+  // If you have an element for days achieved, update it:
   const daysAchievedEl = document.getElementById('days-achieved');
-  const avgIntakeEl = document.getElementById('avg-intake');
-  if (daysAchievedEl) daysAchievedEl.innerText = achievedDays;
-  if (avgIntakeEl) avgIntakeEl.innerText = avgIntake;
+  if (daysAchievedEl) {
+    daysAchievedEl.innerText = achievedDays;
+  }
+  
+  // Remove references to avg-intake (or other elements) if not used
 }
 
 // --------------------------
@@ -184,7 +192,6 @@ function updateCalendarSummary() {
 let reminderInterval;
 
 function requestNotificationPermission() {
-  // If permission is default, request it
   if (Notification.permission === "default") {
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
@@ -202,7 +209,6 @@ function requestNotificationPermission() {
 }
 
 function startReminders() {
-  // Get reminder frequency from settings (default: 60 minutes)
   const frequency = parseInt(localStorage.getItem('reminderFrequency')) || 60;
   if (reminderInterval) clearInterval(reminderInterval);
   reminderInterval = setInterval(() => {
@@ -214,12 +220,13 @@ function showNotification() {
   if (Notification.permission === "granted") {
     new Notification("Time to drink water!", {
       body: "Stay hydrated by drinking a glass of water."
+      // icon: "water.png" // Optionally include your icon here
     });
   }
 }
 
 function snoozeReminder() {
-  const snoozeTime = parseInt(document.getElementById('snooze-time').value) || 15;
+  const snoozeTime = parseInt(document.getElementById('snooze-time')?.value) || 15;
   if (reminderInterval) clearInterval(reminderInterval);
   setTimeout(startReminders, snoozeTime * 60 * 1000);
   alert(`Reminders snoozed for ${snoozeTime} minutes.`);
@@ -229,10 +236,12 @@ function snoozeReminder() {
 // Settings Save
 // --------------------------
 function saveSettings() {
-  const frequency = document.getElementById('reminder-frequency').value;
-  localStorage.setItem('reminderFrequency', frequency);
-  startReminders();
-  alert("Settings saved! Reminder frequency set to " + frequency + " minutes.");
+  const frequency = document.getElementById('reminder-frequency')?.value;
+  if (frequency) {
+    localStorage.setItem('reminderFrequency', frequency);
+    startReminders();
+    alert("Settings saved! Reminder frequency set to " + frequency + " minutes.");
+  }
 }
 
 // --------------------------
@@ -289,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('reminder-frequency').value = frequency;
   }
   
-  // Snooze listener on settings page (optional)
+  // Snooze listener on settings page
   const snoozeInput = document.getElementById('snooze-time');
   if (snoozeInput) {
     snoozeInput.addEventListener('keypress', function(e) {
@@ -308,6 +317,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const saved = localStorage.getItem('consumption-' + today);
   if (saved) {
     waterTotal = parseInt(saved);
-    updateWaterDisplay();
   }
+  updateWaterDisplay();
 });
