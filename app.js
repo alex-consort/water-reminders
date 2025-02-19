@@ -32,9 +32,11 @@ function generateTip() {
 // --------------------------
 // Global Variables
 // --------------------------
-let waterTotal = 0;
-const waterTarget = 2000; // in ml
-let waterHistory = []; // for undo functionality
+// We'll store daily target in localStorage under 'dailyTarget'.
+// Default to 2000 ml if not found.
+let waterTarget = parseInt(localStorage.getItem('dailyTarget')) || 2000;
+let waterTotal = 0; 
+let waterHistory = [];
 
 // --------------------------
 // Visual Bottle & Streak Update
@@ -47,6 +49,7 @@ function updateGlass() {
   }
 }
 
+// Hydration streak: day is counted if consumption >= waterTarget
 function updateStreak() {
   let streak = 0;
   const today = new Date();
@@ -91,7 +94,9 @@ function undoWater() {
   if (waterHistory.length > 0) {
     const lastAmount = waterHistory.pop();
     waterTotal -= lastAmount;
-    if (waterTotal < 0) waterTotal = 0;
+    if (waterTotal < 0) {
+      waterTotal = 0;
+    }
     updateWaterDisplay();
     saveDailyConsumption();
   }
@@ -131,7 +136,7 @@ function generateCalendar() {
   const firstDay = new Date(year, month, 1).getDay();
   const totalDays = new Date(year, month + 1, 0).getDate();
   
-  // empty cells for days before the first of the month
+  // empty cells for days before the first day of the month
   for (let i = 0; i < firstDay; i++) {
     const emptyCell = document.createElement('div');
     emptyCell.classList.add('calendar-day');
@@ -148,8 +153,8 @@ function generateCalendar() {
     cell.appendChild(daySpan);
     
     const dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-    const consumption = localStorage.getItem('consumption-' + dateKey);
-    if (consumption && parseInt(consumption) >= waterTarget) {
+    const consumption = parseInt(localStorage.getItem('consumption-' + dateKey)) || 0;
+    if (consumption >= waterTarget) {
       cell.classList.add('achieved');
     }
     
@@ -168,12 +173,10 @@ function updateCalendarSummary() {
   
   for (let day = 1; day <= totalDays; day++) {
     const dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-    const consumption = localStorage.getItem('consumption-' + dateKey);
-    if (consumption) {
-      totalIntake += parseInt(consumption);
-      if (parseInt(consumption) >= waterTarget) {
-        achievedDays++;
-      }
+    const consumption = parseInt(localStorage.getItem('consumption-' + dateKey)) || 0;
+    totalIntake += consumption;
+    if (consumption >= waterTarget) {
+      achievedDays++;
     }
   }
   
@@ -183,7 +186,7 @@ function updateCalendarSummary() {
     daysAchievedEl.innerText = achievedDays;
   }
   
-  // Remove references to avg-intake (or other elements) if not used
+  // If you want to display total intake or something else, you can do so here
 }
 
 // --------------------------
@@ -192,16 +195,22 @@ function updateCalendarSummary() {
 let reminderInterval;
 
 function requestNotificationPermission() {
-  if (Notification.permission === "default") {
+  // Check if Notification is supported
+  if (typeof Notification === 'undefined') {
+    console.log("Browser doesn't support notifications.");
+    return;
+  }
+  
+  if (Notification.permission === 'default') {
     Notification.requestPermission().then(permission => {
-      if (permission === "granted") {
+      if (permission === 'granted') {
         console.log("Notification permission granted.");
         startReminders();
       } else {
         console.log("Notification permission denied.");
       }
     });
-  } else if (Notification.permission === "granted") {
+  } else if (Notification.permission === 'granted') {
     startReminders();
   } else {
     console.log("Notification permission denied.");
@@ -210,37 +219,74 @@ function requestNotificationPermission() {
 
 function startReminders() {
   const frequency = parseInt(localStorage.getItem('reminderFrequency')) || 60;
-  if (reminderInterval) clearInterval(reminderInterval);
+  if (reminderInterval) {
+    clearInterval(reminderInterval);
+  }
   reminderInterval = setInterval(() => {
     showNotification();
   }, frequency * 60 * 1000);
 }
 
 function showNotification() {
-  if (Notification.permission === "granted") {
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     new Notification("Time to drink water!", {
-      body: "Stay hydrated by drinking a glass of water."
-      // icon: "water.png" // Optionally include your icon here
+      body: "Stay hydrated by drinking a glass of water.",
+      // icon: "water.png" // uncomment or adjust path if you have a custom icon
     });
   }
 }
 
 function snoozeReminder() {
-  const snoozeTime = parseInt(document.getElementById('snooze-time')?.value) || 15;
-  if (reminderInterval) clearInterval(reminderInterval);
-  setTimeout(startReminders, snoozeTime * 60 * 1000);
+  const snoozeInput = document.getElementById('snooze-time');
+  const snoozeTime = snoozeInput ? parseInt(snoozeInput.value) : 15;
+  if (reminderInterval) {
+    clearInterval(reminderInterval);
+  }
+  setTimeout(startReminders, (isNaN(snoozeTime) ? 15 : snoozeTime) * 60 * 1000);
   alert(`Reminders snoozed for ${snoozeTime} minutes.`);
 }
 
 // --------------------------
-// Settings Save
+// Settings Save (Frequency, Daily Target, Dark Mode, etc.)
 // --------------------------
 function saveSettings() {
-  const frequency = document.getElementById('reminder-frequency')?.value;
-  if (frequency) {
+  // Save frequency
+  const freqInput = document.getElementById('reminder-frequency');
+  if (freqInput) {
+    const frequency = parseInt(freqInput.value);
     localStorage.setItem('reminderFrequency', frequency);
-    startReminders();
-    alert("Settings saved! Reminder frequency set to " + frequency + " minutes.");
+  }
+  
+  // Save daily target
+  const dailyTargetInput = document.getElementById('daily-target');
+  if (dailyTargetInput) {
+    const newTarget = parseInt(dailyTargetInput.value);
+    if (!isNaN(newTarget) && newTarget > 0) {
+      localStorage.setItem('dailyTarget', newTarget);
+      waterTarget = newTarget; // update global variable
+      updateWaterDisplay();
+      updateCalendarSummary();
+    }
+  }
+  
+  // Save dark mode
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+  if (darkModeToggle) {
+    const isDarkMode = darkModeToggle.checked;
+    localStorage.setItem('darkModeEnabled', isDarkMode ? 'true' : 'false');
+    applyDarkMode(isDarkMode);
+  }
+  
+  // Start reminders again with new settings
+  startReminders();
+  alert("Settings saved!");
+}
+
+function applyDarkMode(enable) {
+  if (enable) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
   }
 }
 
@@ -248,10 +294,16 @@ function saveSettings() {
 // DOMContentLoaded Initialization
 // --------------------------
 document.addEventListener('DOMContentLoaded', function() {
-  // Request notification permission on load
+  // 1. Request Notification Permission
   requestNotificationPermission();
   
-  // Water intake buttons
+  // 2. Load existing daily target (if any)
+  const storedTarget = localStorage.getItem('dailyTarget');
+  if (storedTarget) {
+    waterTarget = parseInt(storedTarget);
+  }
+  
+  // 3. Water intake buttons
   const waterButtons = document.querySelectorAll('.water-btn');
   waterButtons.forEach(btn => {
     btn.addEventListener('click', function() {
@@ -260,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Custom water amount button
+  // 4. Custom water amount button
   const addCustomBtn = document.getElementById('add-custom');
   if (addCustomBtn) {
     addCustomBtn.addEventListener('click', () => {
@@ -273,32 +325,52 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Undo and clear buttons
+  // 5. Undo and Clear
   const undoBtn = document.getElementById('undo-btn');
   if (undoBtn) {
     undoBtn.addEventListener('click', undoWater);
   }
-  
   const clearBtn = document.getElementById('clear-btn');
   if (clearBtn) {
     clearBtn.addEventListener('click', clearWater);
   }
   
-  // Tip generation button
+  // 6. Tips
   const newTipBtn = document.getElementById('new-tip-btn');
   if (newTipBtn) {
     newTipBtn.addEventListener('click', generateTip);
   }
   
-  // Save settings button on settings page
+  // 7. Settings
   const saveSettingsBtn = document.getElementById('save-settings-btn');
   if (saveSettingsBtn) {
     saveSettingsBtn.addEventListener('click', saveSettings);
-    const frequency = localStorage.getItem('reminderFrequency') || 60;
-    document.getElementById('reminder-frequency').value = frequency;
+    
+    // Load frequency
+    const freqVal = localStorage.getItem('reminderFrequency') || 60;
+    const freqInput = document.getElementById('reminder-frequency');
+    if (freqInput) {
+      freqInput.value = freqVal;
+    }
+    
+    // Load daily target
+    const dailyTargetVal = parseInt(localStorage.getItem('dailyTarget')) || 2000;
+    const dailyTargetInput = document.getElementById('daily-target');
+    if (dailyTargetInput) {
+      dailyTargetInput.value = dailyTargetVal;
+    }
+    
+    // Load dark mode
+    const darkPref = localStorage.getItem('darkModeEnabled');
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle) {
+      const isDark = (darkPref === 'true');
+      darkModeToggle.checked = isDark;
+      applyDarkMode(isDark);
+    }
   }
   
-  // Snooze listener on settings page
+  // 8. Snooze
   const snoozeInput = document.getElementById('snooze-time');
   if (snoozeInput) {
     snoozeInput.addEventListener('keypress', function(e) {
@@ -308,11 +380,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Generate calendar if on calendar page
+  // 9. Calendar
   generateCalendar();
   updateCalendarSummary();
   
-  // Update display with saved data (if any) for today
+  // 10. Load today's consumption
   const today = new Date().toISOString().split('T')[0];
   const saved = localStorage.getItem('consumption-' + today);
   if (saved) {
