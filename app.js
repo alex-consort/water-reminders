@@ -30,26 +30,16 @@ function generateTip() {
 }
 
 // --------------------------
-// Global Variables
-// --------------------------
-let waterTotal = 0;
-let waterHistory = [];
-// We store the daily target in localStorage, but default to 2000 if not set
-let waterTarget = parseInt(localStorage.getItem('dailyTarget')) || 2000;
-
-// --------------------------
 // Visual Bottle & Streak Update
 // --------------------------
 function updateGlass() {
   const fillElement = document.getElementById('water-fill');
   if (fillElement) {
-    const percentage = Math.min((waterTotal / waterTarget) * 100, 100);
+    let percentage = Math.min((waterTotal / waterTarget) * 100, 100);
     fillElement.style.height = percentage + '%';
   }
 }
 
-// Streak for the last 7 days
-// Note the condition for counting a day as achieved is > waterTarget
 function updateStreak() {
   let streak = 0;
   const today = new Date();
@@ -58,22 +48,26 @@ function updateStreak() {
     date.setDate(today.getDate() - i);
     const key = 'consumption-' + date.toISOString().split('T')[0];
     const consumption = localStorage.getItem(key);
-    if (consumption && parseInt(consumption) > waterTarget) {
+    if (consumption && parseInt(consumption) >= waterTarget) {
       streak++;
     } else {
       break;
     }
   }
   const streakEl = document.getElementById('streak-count');
-  if (streakEl) streakEl.innerText = streak;
+  if(streakEl) streakEl.innerText = streak;
 }
 
 // --------------------------
 // Water Consumption Functions
 // --------------------------
+let waterTotal = 0;
+const waterTarget = 2000; // in ml
+let waterHistory = [];  // for undo functionality
+
 function updateWaterDisplay() {
   const totalEl = document.getElementById('water-total');
-  if (totalEl) totalEl.innerText = waterTotal;
+  if(totalEl) totalEl.innerText = waterTotal;
   updateGlass();
   updateStreak();
 }
@@ -84,13 +78,6 @@ function addWater(amount) {
   updateWaterDisplay();
   checkTarget();
   saveDailyConsumption();
-}
-
-// No longer logs "achieved" if consumption === waterTarget
-function checkTarget() {
-  if (waterTotal > waterTarget) {
-    console.log("Daily water target exceeded!");
-  }
 }
 
 function undoWater() {
@@ -116,6 +103,12 @@ function saveDailyConsumption() {
   updateCalendarSummary();
 }
 
+function checkTarget() {
+  if (waterTotal >= waterTarget) {
+    console.log("Daily water target achieved!");
+  }
+}
+
 // --------------------------
 // Calendar Generation & Summary
 // --------------------------
@@ -132,14 +125,14 @@ function generateCalendar() {
   const totalDays = new Date(year, month + 1, 0).getDate();
   
   // empty cells for days before first of month
-  for (let i = 0; i < firstDay; i++) {
+  for (let i = 0; i < firstDay; i++){
     const emptyCell = document.createElement('div');
     emptyCell.classList.add('calendar-day');
     calendarEl.appendChild(emptyCell);
   }
   
   // fill in each day
-  for (let day = 1; day <= totalDays; day++) {
+  for (let day = 1; day <= totalDays; day++){
     const cell = document.createElement('div');
     cell.classList.add('calendar-day');
     
@@ -148,10 +141,8 @@ function generateCalendar() {
     cell.appendChild(daySpan);
     
     const dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-    const consumption = parseInt(localStorage.getItem('consumption-' + dateKey)) || 0;
-    
-    // For a day to be "achieved", consumption must be > waterTarget
-    if (consumption > waterTarget) {
+    const consumption = localStorage.getItem('consumption-' + dateKey);
+    if (consumption && parseInt(consumption) >= waterTarget) {
       cell.classList.add('achieved');
     }
     
@@ -159,7 +150,6 @@ function generateCalendar() {
   }
 }
 
-// We also adjust the summary so that a day is "achieved" only if > waterTarget
 function updateCalendarSummary() {
   const now = new Date();
   const year = now.getFullYear();
@@ -168,42 +158,24 @@ function updateCalendarSummary() {
   
   let achievedDays = 0;
   let totalIntake = 0;
-  let personalBest = 0; // track the highest single-day consumption
-  let longestStreak = 0;
-  let currentStreak = 0;
   
-  for (let day = 1; day <= totalDays; day++) {
+  for (let day = 1; day <= totalDays; day++){
     const dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-    const consumption = parseInt(localStorage.getItem('consumption-' + dateKey.replace('consumption-', 'consumption-'))) || 0;
-    
-    totalIntake += consumption;
-    
-    // personal best
-    if (consumption > personalBest) {
-      personalBest = consumption;
-    }
-    // streak logic: day is "achieved" if consumption > waterTarget
-    if (consumption > waterTarget) {
-      achievedDays++;
-      currentStreak++;
-      if (currentStreak > longestStreak) {
-        longestStreak = currentStreak;
+    const consumption = localStorage.getItem('consumption-' + dateKey);
+    if (consumption) {
+      totalIntake += parseInt(consumption);
+      if (parseInt(consumption) >= waterTarget) {
+        achievedDays++;
       }
-    } else {
-      currentStreak = 0;
     }
   }
   
-  // Update summary elements
-  const daysAchievedEl = document.getElementById('days-achieved');
-  const totalMonthEl = document.getElementById('month-total');
-  const bestDayEl = document.getElementById('best-day');
-  const longestStreakEl = document.getElementById('longest-streak');
+  const avgIntake = totalDays > 0 ? Math.round(totalIntake / totalDays) : 0;
   
+  const daysAchievedEl = document.getElementById('days-achieved');
+  const avgIntakeEl = document.getElementById('avg-intake');
   if (daysAchievedEl) daysAchievedEl.innerText = achievedDays;
-  if (totalMonthEl) totalMonthEl.innerText = totalIntake;
-  if (bestDayEl) bestDayEl.innerText = personalBest;
-  if (longestStreakEl) longestStreakEl.innerText = longestStreak;
+  if (avgIntakeEl) avgIntakeEl.innerText = avgIntake;
 }
 
 // --------------------------
@@ -212,11 +184,7 @@ function updateCalendarSummary() {
 let reminderInterval;
 
 function requestNotificationPermission() {
-  if (typeof Notification === "undefined") {
-    console.log("Notifications are not supported in this browser.");
-    return;
-  }
-  
+  // If permission is default, request it
   if (Notification.permission === "default") {
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
@@ -234,6 +202,7 @@ function requestNotificationPermission() {
 }
 
 function startReminders() {
+  // Get reminder frequency from settings (default: 60 minutes)
   const frequency = parseInt(localStorage.getItem('reminderFrequency')) || 60;
   if (reminderInterval) clearInterval(reminderInterval);
   reminderInterval = setInterval(() => {
@@ -242,10 +211,9 @@ function startReminders() {
 }
 
 function showNotification() {
-  if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+  if (Notification.permission === "granted") {
     new Notification("Time to drink water!", {
-      body: "Stay hydrated by drinking a glass of water.",
-      icon: "water.png"
+      body: "Stay hydrated by drinking a glass of water."
     });
   }
 }
@@ -258,43 +226,13 @@ function snoozeReminder() {
 }
 
 // --------------------------
-// Settings Save (Daily Target, Dark Mode, etc.)
+// Settings Save
 // --------------------------
 function saveSettings() {
-  // Reminder Frequency
   const frequency = document.getElementById('reminder-frequency').value;
   localStorage.setItem('reminderFrequency', frequency);
-  
-  // Daily Target
-  const dailyTargetInput = document.getElementById('daily-target');
-  if (dailyTargetInput) {
-    const newTarget = parseInt(dailyTargetInput.value);
-    if (!isNaN(newTarget) && newTarget > 0) {
-      localStorage.setItem('dailyTarget', newTarget);
-      waterTarget = newTarget; // update the global variable
-      updateWaterDisplay();
-      updateCalendarSummary();
-    }
-  }
-  
-  // Dark Mode
-  const darkModeToggle = document.getElementById('dark-mode-toggle');
-  if (darkModeToggle) {
-    const isDark = darkModeToggle.checked;
-    localStorage.setItem('darkModeEnabled', isDark ? 'true' : 'false');
-    applyDarkMode(isDark);
-  }
-  
   startReminders();
-  alert("Settings saved!");
-}
-
-function applyDarkMode(enable) {
-  if (enable) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
+  alert("Settings saved! Reminder frequency set to " + frequency + " minutes.");
 }
 
 // --------------------------
@@ -347,25 +285,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const saveSettingsBtn = document.getElementById('save-settings-btn');
   if (saveSettingsBtn) {
     saveSettingsBtn.addEventListener('click', saveSettings);
-    
-    // Load existing frequency setting if available
     const frequency = localStorage.getItem('reminderFrequency') || 60;
     document.getElementById('reminder-frequency').value = frequency;
-    
-    // Load daily target
-    const dailyTargetVal = parseInt(localStorage.getItem('dailyTarget')) || 2000;
-    document.getElementById('daily-target').value = dailyTargetVal;
-    
-    // Load dark mode preference
-    const darkModePref = localStorage.getItem('darkModeEnabled');
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    if (darkModePref === 'true') {
-      darkModeToggle.checked = true;
-      applyDarkMode(true);
-    }
   }
   
-  // Snooze listener on settings page
+  // Snooze listener on settings page (optional)
   const snoozeInput = document.getElementById('snooze-time');
   if (snoozeInput) {
     snoozeInput.addEventListener('keypress', function(e) {
@@ -379,11 +303,11 @@ document.addEventListener('DOMContentLoaded', function() {
   generateCalendar();
   updateCalendarSummary();
   
-  // Load today's consumption
+  // Update display with saved data (if any) for today
   const today = new Date().toISOString().split('T')[0];
   const saved = localStorage.getItem('consumption-' + today);
   if (saved) {
     waterTotal = parseInt(saved);
+    updateWaterDisplay();
   }
-  updateWaterDisplay();
 });
