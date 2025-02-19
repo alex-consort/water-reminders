@@ -131,4 +131,69 @@ input[type="number"] {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 5px;
-  margi
+  margin-top: 20px;
+}
+
+.calendar-day {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: center;
+  min-height: 80px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #fafafa;
+  border-radius: 5px;
+}
+
+.calendar-day span {
+  display: block;
+}
+
+.achieved::after {
+  content: "💦";
+  display: block;
+  font-size: 1.5em;
+  margin-top: 5px;
+}
+
+/* Settings */
+#settings {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Dark Mode */
+body.dark-mode {
+  background-color: #1a1a1a;
+  color: #e2e2e2;
+}
+
+body.dark-mode main {
+  background: #2a2a2a;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+body.dark-mode nav {
+  background-color: #333;
+}
+
+body.dark-mode a {
+  color: #fff;
+}
+
+body.dark-mode .calendar-day {
+  background: #3a3a3a;
+  border: 1px solid #555;
+}
