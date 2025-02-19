@@ -214,6 +214,7 @@ function showNotification() {
   if (Notification.permission === "granted") {
     new Notification("Time to drink water!", {
       body: "Stay hydrated by drinking a glass of water."
+      icon: "water.png"
     });
   }
 }
