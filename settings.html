@@ -12,39 +12,30 @@
     <a href="calendar.html">Calendar</a>
     <a href="settings.html">Settings</a>
   </nav>
-
   <main>
     <h1>Settings</h1>
     <section id="settings">
-      <!-- Reminder Frequency -->
       <div class="setting-item">
         <label for="reminder-frequency">Reminder Frequency (minutes):</label>
         <input type="number" id="reminder-frequency" min="1" value="60">
       </div>
-
-      <!-- Snooze Time -->
       <div class="setting-item">
         <label for="snooze-time">Snooze Time (minutes):</label>
         <input type="number" id="snooze-time" min="1" value="15">
       </div>
-
-      <!-- Daily Water Target -->
+      <!-- Custom Daily Target -->
       <div class="setting-item">
         <label for="daily-target">Daily Water Target (ml):</label>
         <input type="number" id="daily-target" min="100" value="2000">
       </div>
-
       <!-- Dark Mode Toggle -->
       <div class="setting-item">
         <label for="dark-mode-toggle">Dark Mode:</label>
         <input type="checkbox" id="dark-mode-toggle">
       </div>
-
-      <!-- Save Button -->
       <button id="save-settings-btn">Save Settings</button>
     </section>
   </main>
-
   <script src="app.js"></script>
 </body>
 </html>
