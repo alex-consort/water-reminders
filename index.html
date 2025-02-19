@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Water Reminder App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="calendar.html">Calendar</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+  <main>
+    <h1>Water Reminder App</h1>
+    
+    <!-- Water Tracker Section -->
+    <section id="tracker-section">
+      <div class="tracker-info">
+        <p>Current consumption: <span id="water-total">0</span> ml</p>
+        <p>Hydration Streak: <span id="streak-count">0</span> days</p>
+      </div>
+      <div id="buttons">
+        <button class="water-btn" data-amount="250">Drink 250ml</button>
+        <button class="water-btn" data-amount="500">Drink 500ml</button>
+        <button class="water-btn" data-amount="1000">Drink 1L</button>
+      </div>
+      <div id="custom-water">
+        <input type="number" id="custom-amount" placeholder="Enter amount (ml)">
+        <button id="add-custom">Add Custom</button>
+      </div>
+      
+      <!-- Visual Bottle (Glass) -->
+      <div id="glass-container">
+        <div id="water-fill"></div>
+      </div>
+      
+      <!-- Actions (Undo & Clear) moved below bottle -->
+      <div id="actions">
+        <button id="undo-btn" class="action-btn">Undo</button>
+        <button id="clear-btn" class="action-btn">Clear</button>
+      </div>
+      
+    </section>
+    
+    <!-- Tip Section (centrally aligned) -->
+    <section id="tip-section">
+      <h2>Water Tips</h2>
+      <p id="water-tip">Stay hydrated for a healthy life!</p>
+      <button id="new-tip-btn">Generate New Tip</button>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
